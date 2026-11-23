@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/emr-visit/visit-record.schema.json",
+  "title": "EMR Visit Record (draft)",
+  "description": "DRAFT. Tab names and field lists are assumptions based on a standard outpatient EMR visit and UAE pre-authorization (eClaimLink) fields. Each field marked x-status 'unverified' must be checked against the live SLMC screens and the eClaimLink PR form before use. Contains no patient data.",
+  "type": "object",
+  "required": ["visitId", "patient", "encounter", "tabs"],
+  "properties": {
+    "visitId": { "type": "string", "description": "Internal visit identifier (placeholder: VISIT-<id>)." },
+    "sourceSystem": { "type": "string", "const": "SLMC", "x-status": "unverified" },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "patient": {
+      "type": "object",
+      "required": ["patientId", "name", "dateOfBirth", "sex"],
+      "properties": {
+        "patientId": { "type": "string", "description": "MRN [placeholder]" },
+        "emiratesId": { "type": "string", "pattern": "^784-[0-9]{4}-[0-9]{7}-[0-9]$", "x-status": "unverified" },
+        "name": { "type": "string" },
+        "dateOfBirth": { "type": "string", "format": "date" },
+        "sex": { "type": "string", "enum": ["male", "female", "other", "unknown"] },
+        "nationality": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "address": { "type": "string" },
+        "emergencyContact": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "relationship": { "type": "string" },
+            "phone": { "type": "string" }
+          }
+        }
+      }
+    },
+    "insurance": {
+      "type": "object",
+      "x-status": "unverified",
+      "properties": {
+        "payerName": { "type": "string" },
+        "payerId": { "type": "string" },
+        "policyNumber": { "type": "string" },
+        "memberId": { "type": "string" },
+        "policyHolder": { "type": "string" },
+        "relationToHolder": { "type": "string" },
+        "policyStart": { "type": "string", "format": "date" },
+        "policyEnd": { "type": "string", "format": "date" },
+        "copayPercent": { "type": "number" },
+        "networkTier": { "type": "string" }
+      }
+    },
+    "encounter": {
+      "type": "object",
+      "required": ["encounterId", "visitDate", "visitType", "clinician"],
+      "properties": {
+        "encounterId": { "type": "string" },
+        "visitDate": { "type": "string", "format": "date-time" },
+        "visitType": { "type": "string", "enum": ["new", "follow-up", "emergency", "procedure", "teleconsult", "other"] },
+        "facility": { "type": "string" },
+        "department": { "type": "string" },
+        "clinician": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "specialty": { "type": "string" },
+            "dhaOrDohLicenseNo": { "type": "string", "x-status": "unverified" }
+          }
+        },
+        "chiefComplaint": { "type": "string" },
+        "referralSource": { "type": "string" },
+        "status": { "type": "string", "enum": ["registered", "in-progress", "completed", "cancelled", "no-show"] }
+      }
+    },
+    "tabs": {
+      "type": "object",
+      "description": "One key per EMR tab. Tab list is a placeholder until confirmed on the live screen.",
+      "properties": {
+        "registration": { "$ref": "#/$defs/registrationTab" },
+        "vitals": { "$ref": "#/$defs/vitalsTab" },
+        "history": { "$ref": "#/$defs/historyTab" },
+        "examination": { "$ref": "#/$defs/examinationTab" },
+        "diagnosis": { "$ref": "#/$defs/diagnosisTab" },
+        "orders": { "$ref": "#/$defs/ordersTab" },
+        "results": { "$ref": "#/$defs/resultsTab" },
+        "medications": { "$ref": "#/$defs/medicationsTab" },
+        "procedures": { "$ref": "#/$defs/proceduresTab" },
+        "plan": { "$ref": "#/$defs/planTab" },
+        "billing": { "$ref": "#/$defs/billingTab" },
+        "attachments": { "$ref": "#/$defs/attachmentsTab" },
+        "preauthorization": { "$ref": "#/$defs/preauthTab" }
+      }
+    }
+  },
+  "$defs": {
+    "registrationTab": {
+      "type": "object",
+      "properties": {
+        "registrationNo": { "type": "string" },
+        "consentSigned": { "type": "boolean" },
+        "consentDate": { "type": "string", "format": "date" },
+        "idVerified": { "type": "boolean" }
+      }
+    },
+    "vitalsTab": {
+      "type": "object",
+      "properties": {
+        "measuredAt": { "type": "string", "format": "date-time" },
+        "heightCm": { "type": "number" },
+        "weightKg": { "type": "number" },
+        "bmi": { "type": "number" },
+        "temperatureC": { "type": "number" },
+        "pulseBpm": { "type": "integer" },
+        "respiratoryRate": { "type": "integer" },
+        "bpSystolic": { "type": "integer" },
+        "bpDiastolic": { "type": "integer" },
+        "spo2Percent": { "type": "number" },
+        "painScore0to10": { "type": "integer", "minimum": 0, "maximum": 10 }
+      }
+    },
+    "historyTab": {
+      "type": "object",
+      "properties": {
+        "presentIllness": { "type": "string" },
+        "pastMedical": { "type": "array", "items": { "type": "string" } },
+        "pastSurgical": { "type": "array", "items": { "type": "string" } },
+        "allergies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "substance": { "type": "string" },
+              "reaction": { "type": "string" },
+              "severity": { "type": "string", "enum": ["mild", "moderate", "severe", "unknown"] }
+            }
+          }
+        },
+        "familyHistory": { "type": "string" },
+        "socialHistory": {
+          "type": "object",
+          "properties": {
+            "smoking": { "type": "string" },
+            "alcohol": { "type": "string" },
+            "occupation": { "type": "string" }
+          }
+        }
+      }
+    },
+    "examinationTab": {
+      "type": "object",
+      "properties": {
+        "generalAppearance": { "type": "string" },
+        "systemReviews": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "diagnosisTab": {
+      "type": "object",
+      "properties": {
+        "diagnoses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "description", "type"],
+            "properties": {
+              "code": { "type": "string", "description": "ICD-10-CM code [placeholder]" },
+              "description": { "type": "string" },
+              "type": { "type": "string", "enum": ["primary", "secondary", "provisional", "rule-out"] },
+              "onsetDate": { "type": "string", "format": "date" }
+            }
+          }
+        }
+      }
+    },
+    "ordersTab": {
+      "type": "object",
+      "properties": {
+        "orders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "type": { "type": "string", "enum": ["lab", "imaging", "referral", "other"] },
+              "code": { "type": "string", "description": "CPT/local code [placeholder]" },
+              "description": { "type": "string" },
+              "orderedAt": { "type": "string", "format": "date-time" },
+              "status": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "resultsTab": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "orderId": { "type": "string" },
+              "test": { "type": "string" },
+              "value": { "type": "string" },
+              "unit": { "type": "string" },
+              "referenceRange": { "type": "string" },
+              "flag": { "type": "string", "enum": ["normal", "high", "low", "critical"] },
+              "resultedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "medicationsTab": {
+      "type": "object",
+      "properties": {
+        "medications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "genericName": { "type": "string" },
+              "dose": { "type": "string" },
+              "route": { "type": "string" },
+              "frequency": { "type": "string" },
+              "duration": { "type": "string" },
+              "quantity": { "type": "number" },
+              "action": { "type": "string", "enum": ["new", "continue", "change", "stop"] }
+            }
+          }
+        }
+      }
+    },
+    "proceduresTab": {
+      "type": "object",
+      "properties": {
+        "procedures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string", "description": "CPT [placeholder]" },
+              "description": { "type": "string" },
+              "performedAt": { "type": "string", "format": "date-time" },
+              "performedBy": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "planTab": {
+      "type": "object",
+      "properties": {
+        "assessment": { "type": "string" },
+        "plan": { "type": "string" },
+        "followUpDate": { "type": "string", "format": "date" },
+        "patientEducation": { "type": "string" },
+        "referrals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "billingTab": {
+      "type": "object",
+      "properties": {
+        "invoiceNo": { "type": "string" },
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "description": { "type": "string" },
+              "quantity": { "type": "number" },
+              "unitPrice": { "type": "number" },
+              "total": { "type": "number" }
+            }
+          }
+        },
+        "currency": { "type": "string", "default": "AED" },
+        "totalAmount": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["unpaid", "partial", "paid", "waived"] }
+      }
+    },
+    "attachmentsTab": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "mimeType": { "type": "string" },
+              "uploadedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      }
+    },
+    "preauthTab": {
+      "type": "object",
+      "description": "Mirrors the eClaimLink pre-authorization request. Field list unverified until the PR form is reviewed.",
+      "x-status": "unverified",
+      "properties": {
+        "requestNo": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "submitted", "approved", "rejected", "pended"] },
+        "requestedServices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "description": { "type": "string" },
+              "quantity": { "type": "number" },
+              "estimatedAmount": { "type": "number" }
+            }
+          }
+        },
+        "approvalNo": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "validUntil": { "type": "string", "format": "date" }
+      }
+    }
+  }
+}
