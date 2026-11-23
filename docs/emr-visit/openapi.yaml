@@ -1,0 +1,86 @@
+openapi: 3.1.0
+info:
+  title: EMR Visit Record API (draft)
+  version: 0.1.0
+  description: >
+    DRAFT contract. Models the visit record in visit-record.schema.json. No live SLMC
+    integration exists yet. Replace the stub server with an adapter to the vendor's
+    documented interface once access is confirmed. Do not scrape the EMR UI.
+servers:
+  - url: https://api.example.invalid/v1
+paths:
+  /visits:
+    post:
+      summary: Create a visit record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitRecord" }
+      responses:
+        "201": { description: Created }
+        "400": { description: Validation error }
+  /visits/{visitId}:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get a visit record (all tabs)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VisitRecord" }
+        "404": { description: Not found }
+    put:
+      summary: Replace a visit record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitRecord" }
+      responses:
+        "200": { description: Updated }
+  /visits/{visitId}/tabs/{tab}:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: { type: string }
+      - name: tab
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [registration, vitals, history, examination, diagnosis, orders, results, medications, procedures, plan, billing, attachments, preauthorization]
+    get:
+      summary: Get one tab of a visit
+      responses:
+        "200": { description: OK }
+        "404": { description: Not found }
+    patch:
+      summary: Update one tab of a visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        "200": { description: Updated }
+  /visits/{visitId}/preauthorization:
+    parameters:
+      - name: visitId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      summary: Create a pre-authorization DRAFT (not submitted to payer)
+      responses:
+        "201": { description: Draft created }
+components:
+  schemas:
+    VisitRecord:
+      $ref: "./visit-record.schema.json"
